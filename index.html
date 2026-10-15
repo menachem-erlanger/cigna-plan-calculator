@@ -229,7 +229,7 @@ const T = {
     nEmbedded:"<b>תקרה לכל אדם:</b> בכיסוי משפחתי לכל מבוטח יש השתתפות עצמית ותקרה משלו. כשאדם מגיע לתקרה האישית שלו, הביטוח משלם עליו 100%, גם אם המשפחה עוד לא הגיעה לתקרה המשפחתית.",
     nCalendar:"<b>איפוס ב-1 בינואר:</b> ההשתתפות העצמית והתקרות נספרות לפי שנה קלנדרית. מי שמצטרף באמצע השנה מתחיל מאפס שוב בינואר.",
     nHsa:"<b>איך זה מחושב:</b> עלות נטו = פרמיה − סיוע חיצוני + השתתפות עצמית − הטבת HSA. הטבת HSA = הפקדת המעסיק ועוד חיסכון המס על ההפקדה שלך. החישוב מקורב: בתוכניות OAP ביקור אצל רופא ראשוני עולה דמי ביקור קבועים (Copay), והם לא נכללים.",
-    footer:"מחשבון לא רשמי, לפי סיכומי התוכניות ומחירון הפרמיות של 2026, בתוך הרשת. במקרה של סתירה, מסמכי התוכנית של Cigna הם המחייבים. האתר רושם כניסות (שעה, כתובת IP ומיקום משוער) לצורך ספירה בלבד.",
+    footer:"מחשבון לא רשמי, לפי סיכומי התוכניות ומחירון הפרמיות של 2026, בתוך הרשת. במקרה של סתירה, מסמכי התוכנית של Cigna הם המחייבים. האתר רושם כניסות לצורך ספירה בלבד: שעה, כתובת IP, מיקום משוער וספק אינטרנט, סוג מכשיר ודפדפן, גודל מסך, שפה, אזור זמן ומאיפה הגעת.",
   },
   en: {
     eyebrow:"Medical plans · 2026",
@@ -272,7 +272,7 @@ const T = {
     nEmbedded:"<b>Per-person caps:</b> with family coverage, each person has their own deductible and out-of-pocket max. Once someone reaches their own cap, the plan pays 100% for them, even before the family reaches the family cap.",
     nCalendar:"<b>January 1 reset:</b> deductibles and caps run on the calendar year. Anyone who joins mid-year starts over from zero in January.",
     nHsa:"<b>How it's calculated:</b> net cost = premium − outside assistance + cost share − HSA benefit. HSA benefit = the employer contribution plus the tax saved on your own contribution. Approximate: on the OAP plans a primary-care visit is a flat copay, which isn't included.",
-    footer:"An unofficial calculator based on the 2026 plan summaries and premium rates, in-network. If anything conflicts, Cigna's plan documents govern. This site logs visits (time, IP address and approximate location) for counting only.",
+    footer:"An unofficial calculator based on the 2026 plan summaries and premium rates, in-network. If anything conflicts, Cigna's plan documents govern. This site logs visits for counting only: time, IP address, approximate location and internet provider, device and browser type, screen size, language, time zone, and the site you came from.",
   }
 };
 
@@ -378,16 +378,27 @@ document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click
 applyLang();
 </script>
 <script>
-// Visit log: one row per page load (time, IP, city, country, device) in the owner's Google Sheet.
+// Visit log: one row per page load in the owner's Google Sheet. Standard analytics fields only, disclosed in the footer.
 (function(){
   const LOG = "https://script.google.com/macros/s/AKfycby0qRsubIC0UoMbcms64Ix8FykQ0_BUm0k2VmtClDU590jq6VzFDkXXui3yV7ONUjCV/exec";
   const ua = navigator.userAgent;
-  const os = /iPhone/.test(ua) ? "iPhone" : /iPad/.test(ua) ? "iPad" : /Android/.test(ua) ? "Android" : /Mac OS X/.test(ua) ? "Mac" : /Windows/.test(ua) ? "Windows" : "Other";
+  const os = /iPhone/.test(ua) ? "iPhone" : /iPad/.test(ua) ? "iPad" : /Android/.test(ua) ? "Android" : /Mac OS X/.test(ua) ? "Mac" : /Windows/.test(ua) ? "Windows" : /Linux/.test(ua) ? "Linux" : "Other";
   const br = /Edg\//.test(ua) ? "Edge" : /CriOS|Chrome\//.test(ua) ? "Chrome" : /FxiOS|Firefox\//.test(ua) ? "Firefox" : /Safari\//.test(ua) ? "Safari" : "Other";
+  const ref = document.referrer ? new URL(document.referrer).hostname : "";
+  const base = {
+    code: new URLSearchParams(location.search).get("r") || "",
+    device: os + " · " + br,
+    screen: screen.width + "×" + screen.height,
+    language: navigator.language || "",
+    timezone: (Intl.DateTimeFormat().resolvedOptions().timeZone) || "",
+    referrer: ref,
+    // Legacy keys so the original Apps Script keeps working until it is updated.
+    ip: "", city: "", country: ""
+  };
   const send = d => fetch(LOG, {method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain"}, body: JSON.stringify(d)}).catch(() => {});
   fetch("https://ipapi.co/json/").then(r => r.json())
-    .then(g => send({ip: g.ip || "", city: g.city || "", country: g.country_name || "", device: os + " · " + br}))
-    .catch(() => send({ip: "", city: "", country: "", device: os + " · " + br}));
+    .then(g => send(Object.assign(base, {ip: g.ip || "", city: g.city || "", region: g.region || "", country: g.country_name || "", isp: g.org || ""})))
+    .catch(() => send(base));
 })();
 </script>
 </body>
