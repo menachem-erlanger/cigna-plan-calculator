@@ -395,6 +395,8 @@ applyLang();
   } catch(e) {}
   const base = {
     visitor, visit_no: visitNo,
+    // The deployed Apps Script stores a "code" column; carry the visitor ID and visit number there too.
+    code: visitor ? visitor + " #" + visitNo : "",
     device: os + " · " + br,
     screen: screen.width + "×" + screen.height,
     language: navigator.language || "",
