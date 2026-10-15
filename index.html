@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cigna 2026 Plan Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700&family=Assistant:wght@400;600;700&display=swap">
+<style>
+/* Layout: one working column — controls panel, then the result table as the hero, then the plan reference. */
+:root{
+  --paper:#f5f7f8; --surface:#ffffff; --ink:#15212a; --muted:#5d6b75; --rule:#dde3e7;
+  --accent:#0d6b67; --accent-soft:#e2f1ef; --good:#2b7a45; --good-soft:#e3f2e7; --warn:#9a5b12; --warn-soft:#f7ecdc;
+  --display:"Rubik","Assistant",system-ui,sans-serif;
+  --body:"Assistant","Rubik",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0f1519; --surface:#172027; --ink:#e6ecef; --muted:#9aa8b1; --rule:#2a3740;
+    --accent:#5cc3bb; --accent-soft:#16302f; --good:#7ccf96; --good-soft:#17291d; --warn:#e3a95f; --warn-soft:#2f2415;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0f1519; --surface:#172027; --ink:#e6ecef; --muted:#9aa8b1; --rule:#2a3740;
+  --accent:#5cc3bb; --accent-soft:#16302f; --good:#7ccf96; --good-soft:#17291d; --warn:#e3a95f; --warn-soft:#2f2415;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 var(--body)}
+.wrap{max-width:1000px;margin:0 auto;padding-inline:16px;padding-block:28px 64px;display:flex;flex-direction:column;gap:22px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(1.6rem,4vw,2.2rem);line-height:1.15;margin:0;text-wrap:balance}
+.sub{margin:4px 0 0;color:var(--muted);max-width:62ch}
+h2{font-family:var(--display);font-weight:600;font-size:1.15rem;margin:0}
+.eyebrow{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.lang{display:flex;border:1px solid var(--rule);border-radius:999px;overflow:hidden;background:var(--surface)}
+.lang button{font:600 .9rem var(--body);border:0;background:transparent;color:var(--ink);padding:6px 14px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
+.lang button:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:18px}
+.controls{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;min-width:0}
+legend{padding:0;margin-bottom:6px}
+label{font-size:.9rem;color:var(--muted);display:block}
+label b{color:var(--ink);font-variant-numeric:tabular-nums}
+select,input[type=number]{width:100%;padding:8px 10px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--ink);font:inherit;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.check{display:flex;gap:8px;align-items:center;color:var(--ink);font-size:.95rem}
+.check input{accent-color:var(--accent);width:18px;height:18px}
+.sub-group{display:flex;flex-direction:column;gap:8px;padding-inline-start:12px;border-inline-start:2px solid var(--accent-soft)}
+.verdict{background:var(--good-soft);border:1px solid color-mix(in srgb,var(--good) 30%,transparent);border-radius:12px;padding:14px 16px;font-size:1.02rem}
+.verdict b{font-variant-numeric:tabular-nums}
+.table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px;font-variant-numeric:tabular-nums}
+th,td{padding:10px;border-bottom:1px solid var(--rule);white-space:nowrap;text-align:start}
+th{font-size:.78rem;letter-spacing:.04em;color:var(--muted);font-weight:700;text-transform:uppercase}
+td.n,th.n{text-align:end}
+tr.best td{background:var(--good-soft)}
+tr.best td:first-child{box-shadow:inset 3px 0 0 var(--good)}
+[dir="rtl"] tr.best td:first-child{box-shadow:inset -3px 0 0 var(--good)}
+.pill{display:inline-block;margin-inline-start:8px;padding:1px 9px;border-radius:999px;font-size:.75rem;font-weight:700;background:var(--good);color:var(--surface);vertical-align:1px}
+.muted{color:var(--muted)}
+.small{font-size:.86rem}
+.notes{display:grid;gap:10px}
+.note{padding:10px 14px;border-radius:10px;background:var(--accent-soft)}
+.note.warn{background:var(--warn-soft)}
+.note b{font-weight:700}
+.section{display:flex;flex-direction:column;gap:12px}
+footer{color:var(--muted);font-size:.82rem;max-width:75ch}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app">
+  <header>
+    <div>
+      <div class="eyebrow" data-t="eyebrow"></div>
+      <h1 data-t="title"></h1>
+      <p class="sub" data-t="subtitle"></p>
+    </div>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" id="langHe" data-lang="he">עברית</button>
+      <button type="button" id="langEn" data-lang="en">English</button>
+    </div>
+  </header>
+
+  <section class="panel controls" aria-labelledby="ctrlTitle">
+    <fieldset>
+      <legend><h2 id="ctrlTitle" data-t="coverage"></h2></legend>
+      <label for="tier" data-t="whoCovered"></label>
+      <select id="tier">
+        <option value="fam" data-t="tierFam"></option>
+        <option value="you" data-t="tierYou"></option>
+      </select>
+      <div id="famOnly1" class="sub-group">
+        <label class="check"><input type="checkbox" id="hiOn" checked><span data-t="hiOn"></span></label>
+        <div id="hiBox">
+          <label for="dSpend"><span data-t="hiSpend"></span>: <b id="dSpendOut"></b></label>
+          <input type="range" id="dSpend" min="0" max="300000" step="1000" value="150000">
+          <input type="number" id="dSpendNum" min="0" step="1000" value="150000">
+        </div>
+      </div>
+      <label for="spend" style="margin-top:6px"><span id="spendLabel"></span>: <b id="spendOut"></b></label>
+      <input type="range" id="spend" min="0" max="80000" step="500" value="5000">
+      <input type="number" id="spendNum" min="0" step="100" value="5000">
+    </fieldset>
+
+    <fieldset id="famOnly2">
+      <legend><h2 data-t="assistTitle"></h2></legend>
+      <label for="assist" data-t="assistMode"></label>
+      <select id="assist">
+        <option value="full" data-t="assistFull"></option>
+        <option value="cap" data-t="assistCap"></option>
+        <option value="none" data-t="assistNone"></option>
+      </select>
+      <div id="capBox">
+        <label for="capAmt" data-t="capAmt"></label>
+        <input type="number" id="capAmt" min="0" step="10" value="511.62">
+      </div>
+      <label for="reimb" data-t="reimb"></label>
+      <input type="number" id="reimb" min="0" step="100" value="2000">
+      <p class="small muted" style="margin:0" data-t="assistHelp"></p>
+    </fieldset>
+
+    <fieldset>
+      <legend><h2 data-t="hsaTitle"></h2></legend>
+      <label for="hsaSelf" data-t="hsaSelf"></label>
+      <input type="number" id="hsaSelf" min="0" max="8750" step="100" value="0">
+      <label for="taxRate" data-t="taxRate"></label>
+      <input type="number" id="taxRate" min="0" max="60" step="1" value="30">
+      <p class="small muted" style="margin:0" data-t="hsaHelp"></p>
+    </fieldset>
+  </section>
+
+  <section class="section" aria-labelledby="resTitle">
+    <h2 id="resTitle" data-t="results"></h2>
+    <div class="verdict" id="verdict" aria-live="polite"></div>
+    <div class="panel table-wrap" style="padding:6px 10px">
+      <table id="resTable">
+        <thead><tr id="resHead"></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="note warn" id="worst"></div>
+  </section>
+
+  <section class="section" aria-labelledby="plansTitle">
+    <h2 id="plansTitle" data-t="plans"></h2>
+    <div class="panel table-wrap" style="padding:6px 10px">
+      <table>
+        <thead><tr id="planHead"></tr></thead>
+        <tbody id="planRows"></tbody>
+      </table>
+    </div>
+    <p class="small muted" id="planNote" style="margin:0"></p>
+  </section>
+
+  <section class="notes" aria-label="Notes">
+    <div class="note" data-t="nPreventive"></div>
+    <div class="note" data-t="nEmbedded"></div>
+    <div class="note warn" data-t="nCalendar"></div>
+    <div class="note" data-t="nHsa"></div>
+  </section>
+
+  <footer data-t="footer"></footer>
+</div>
+
+<script>
+// In-network figures, 2026 plan year. you = employee only; kid = "You + Child(ren)" premium;
+// fam = whole family; ind = per-person deductible / out-of-pocket max inside family coverage.
+const PLANS = [
+  {name:"Cigna HDHP 3500", coins:.20, pcp:{he:"$0 + 20% אחרי השתתפות עצמית", en:"$0 + 20% after deductible"}, hsa:true,
+   you:{monthly:136.96, ded:3500, oop:6000}, kid:{monthly:309.52}, fam:{monthly:520.43, ded:7000, oop:12000}, ind:{ded:3500, oop:6000}},
+  {name:"Cigna OAP 250", coins:.10, pcp:{he:"$20", en:"$20"},
+   you:{monthly:370.87, ded:250, oop:2250}, kid:{monthly:685.05}, fam:{monthly:1184.53, ded:750, oop:4500}, ind:{ded:250, oop:2250}},
+  {name:"Cigna OAP 500", coins:.20, pcp:{he:"$20", en:"$20"},
+   you:{monthly:318.72, ded:500, oop:3000}, kid:{monthly:585.97}, fam:{monthly:1028.09, ded:1500, oop:6000}, ind:{ded:500, oop:3000}},
+  {name:"Cigna OAP 1000", coins:.20, pcp:{he:"$25", en:"$25"},
+   you:{monthly:279.59, ded:1000, oop:4000}, kid:{monthly:511.62}, fam:{monthly:910.69, ded:3000, oop:8000}, ind:{ded:1000, oop:4000}},
+  {name:"Cigna OAP 2000", coins:.30, pcp:{he:"$30", en:"$30"},
+   you:{monthly:217.85, ded:2000, oop:6000}, kid:{monthly:394.32}, fam:{monthly:725.46, ded:6000, oop:12000}, ind:{ded:2000, oop:6000}},
+];
+const HSA = { you:{employer:600, max:4400}, fam:{employer:1200, max:8750} };
+
+const T = {
+  he: {
+    eyebrow:"תוכניות ביטוח רפואי · 2026",
+    title:"מחשבון תוכניות Cigna",
+    subtitle:"משווה את חמש התוכניות לפי העלות השנתית בפועל: פרמיה, השתתפות עצמית ותקרות, סיוע חיצוני וההפקדה של המעסיק ל-HSA.",
+    coverage:"כיסוי והוצאות",
+    whoCovered:"מי בביטוח",
+    tierFam:"אני + משפחה",
+    tierYou:"רק אני",
+    hiOn:"לבן משפחה אחד יש הוצאות גבוהות (טיפול מתמשך)",
+    hiSpend:"ההוצאות שלו בשנה, לפני ביטוח",
+    spendFam:"ההוצאות של שאר המשפחה יחד, לפני ביטוח",
+    spendAll:"ההוצאות של כל המשפחה יחד, לפני ביטוח",
+    spendYou:"ההוצאות הרפואיות שלי בשנה, לפני ביטוח",
+    assistTitle:"סיוע חיצוני",
+    assistMode:"גוף חיצוני משלם חלק מהפרמיה",
+    assistFull:"את מלוא הפרמיה של You + Child(ren)",
+    assistCap:"את הפרמיה של You + Child(ren), עד סכום חודשי",
+    assistNone:"אין סיוע חיצוני",
+    capAmt:"סכום מקסימלי בחודש ($)",
+    reimb:"החזר שנתי על ההוצאות של בן המשפחה ($)",
+    assistHelp:"למשל ארגון חסד שמשלם פרמיה ומחזיר חלק מההוצאות. ההחזר מחושב רק על ההשתתפות של בן המשפחה עם ההוצאות הגבוהות.",
+    hsaTitle:"HSA",
+    hsaSelf:"כמה אני מפקיד בעצמי בשנה (רק ב-HDHP)",
+    taxRate:"שיעור מס שולי משוער (פדרלי + מדינה + FICA) %",
+    hsaHelp:"המעסיק מפקיד $50 בחודש ליחיד ו-$100 בחודש למשפחה.",
+    results:"עלות שנתית בפועל",
+    plans:"התוכניות בקצרה",
+    hPlan:"תוכנית", hPrem:"פרמיה שנתית", hAssist:"סיוע חיצוני", hHi:"השתתפות: בן המשפחה", hRest:"השתתפות: שאר המבוטחים", hHsa:"הטבת HSA", hNet:"עלות נטו בשנה",
+    hMonthly:"פרמיה בחודש", hKid:"You + Child(ren)", hDed:"השתתפות עצמית", hOop:"תקרה שנתית", hPcp:"רופא ראשוני", hCoins:"Co-insurance",
+    planNoteFam:"בכיסוי משפחתי: הסכום הראשון הוא למשפחה, והסכום בסוגריים הוא לכל אדם. You + Child(ren) הוא הסכום שלפיו מחושב הסיוע החיצוני.",
+    planNoteYou:"",
+    cheapest:"הכי זולה",
+    verdict:(s,best,net,diff,next)=>`${s}, <b>${best}</b> יוצאת הכי זולה: <b><bdi>${net}</bdi></b> נטו בשנה, <bdi>${diff}</bdi> פחות מ-${next}.`,
+    spendFamHi:(d,o)=>`בהוצאות של <b><bdi>${d}</bdi></b> לבן המשפחה ו-<b><bdi>${o}</bdi></b> לשאר המשפחה`,
+    spendFamNo:(o)=>`בהוצאות של <b><bdi>${o}</bdi></b> לכל המשפחה`,
+    spendYouT:(o)=>`בהוצאה של <b><bdi>${o}</bdi></b> בשנה`,
+    worst:(lo,lv,hi,hv)=>`<b>בשנה הכי גרועה</b> (כולם מגיעים לתקרה): ${lo} הכי זולה (<bdi>${lv}</bdi>), ו-${hi} הכי יקרה (<bdi>${hv}</bdi>).`,
+    nPreventive:"<b>בדיקות מונעות</b> (בדיקה שנתית, חיסונים, בדיקות סקר) מכוסות 100% בכל התוכניות, אצל רופא בתוך הרשת.",
+    nEmbedded:"<b>תקרה לכל אדם:</b> בכיסוי משפחתי לכל מבוטח יש השתתפות עצמית ותקרה משלו. כשאדם מגיע לתקרה האישית שלו, הביטוח משלם עליו 100%, גם אם המשפחה עוד לא הגיעה לתקרה המשפחתית.",
+    nCalendar:"<b>איפוס ב-1 בינואר:</b> ההשתתפות העצמית והתקרות נספרות לפי שנה קלנדרית. מי שמצטרף באמצע השנה מתחיל מאפס שוב בינואר.",
+    nHsa:"<b>איך זה מחושב:</b> עלות נטו = פרמיה − סיוע חיצוני + השתתפות עצמית − הטבת HSA. הטבת HSA = הפקדת המעסיק ועוד חיסכון המס על ההפקדה שלך. החישוב מקורב: בתוכניות OAP ביקור אצל רופא ראשוני עולה דמי ביקור קבועים (Copay), והם לא נכללים.",
+    footer:"מחשבון לא רשמי, לפי סיכומי התוכניות ומחירון הפרמיות של 2026, בתוך הרשת. במקרה של סתירה, מסמכי התוכנית של Cigna הם המחייבים.",
+  },
+  en: {
+    eyebrow:"Medical plans · 2026",
+    title:"Cigna Plan Calculator",
+    subtitle:"Compares the five plans by what they actually cost per year: premiums, deductibles and caps, outside assistance, and the employer's HSA contribution.",
+    coverage:"Coverage and costs",
+    whoCovered:"Who's covered",
+    tierFam:"Me + family",
+    tierYou:"Just me",
+    hiOn:"One family member has high costs (ongoing treatment)",
+    hiSpend:"Their costs per year, before insurance",
+    spendFam:"Everyone else's costs combined, before insurance",
+    spendAll:"The whole family's costs combined, before insurance",
+    spendYou:"My medical costs per year, before insurance",
+    assistTitle:"Outside assistance",
+    assistMode:"An outside organization pays part of the premium",
+    assistFull:"The full You + Child(ren) premium",
+    assistCap:"The You + Child(ren) premium, up to a monthly limit",
+    assistNone:"No outside assistance",
+    capAmt:"Monthly limit ($)",
+    reimb:"Yearly reimbursement for that family member's costs ($)",
+    assistHelp:"For example, a charity that pays a premium and reimburses some costs. The reimbursement applies only to the high-cost family member's cost share.",
+    hsaTitle:"HSA",
+    hsaSelf:"My own contribution per year (HDHP only)",
+    taxRate:"Estimated marginal tax rate (federal + state + FICA) %",
+    hsaHelp:"The employer contributes $50/month for individuals and $100/month for families.",
+    results:"Actual cost per year",
+    plans:"The plans at a glance",
+    hPlan:"Plan", hPrem:"Annual premium", hAssist:"Outside assistance", hHi:"Cost share: family member", hRest:"Cost share: everyone else", hHsa:"HSA benefit", hNet:"Net cost per year",
+    hMonthly:"Monthly premium", hKid:"You + Child(ren)", hDed:"Deductible", hOop:"Out-of-pocket max", hPcp:"Primary care", hCoins:"Coinsurance",
+    planNoteFam:"For family coverage: the first amount is for the family, the one in parentheses is per person. You + Child(ren) is the premium the outside assistance is based on.",
+    planNoteYou:"",
+    cheapest:"Cheapest",
+    verdict:(s,best,net,diff,next)=>`${s}, <b>${best}</b> is cheapest: <b>${net}</b> net per year, ${diff} less than ${next}.`,
+    spendFamHi:(d,o)=>`With <b>${d}</b> for the family member and <b>${o}</b> for everyone else`,
+    spendFamNo:(o)=>`With <b>${o}</b> for the whole family`,
+    spendYouT:(o)=>`At <b>${o}</b> a year`,
+    worst:(lo,lv,hi,hv)=>`<b>In the worst year</b> (everyone reaches the cap): ${lo} is cheapest (${lv}) and ${hi} is most expensive (${hv}).`,
+    nPreventive:"<b>Preventive care</b> (annual physical, vaccines, screenings) is covered 100% on every plan, with an in-network doctor.",
+    nEmbedded:"<b>Per-person caps:</b> with family coverage, each person has their own deductible and out-of-pocket max. Once someone reaches their own cap, the plan pays 100% for them, even before the family reaches the family cap.",
+    nCalendar:"<b>January 1 reset:</b> deductibles and caps run on the calendar year. Anyone who joins mid-year starts over from zero in January.",
+    nHsa:"<b>How it's calculated:</b> net cost = premium − outside assistance + cost share − HSA benefit. HSA benefit = the employer contribution plus the tax saved on your own contribution. Approximate: on the OAP plans a primary-care visit is a flat copay, which isn't included.",
+    footer:"An unofficial calculator based on the 2026 plan summaries and premium rates, in-network. If anything conflicts, Cigna's plan documents govern.",
+  }
+};
+
+const $ = id => document.getElementById(id);
+const fmt = n => "$" + Math.round(n).toLocaleString("en-US");
+const num = id => Math.max(0, +$(id).value || 0);
+let lang = "he";
+try { const s = localStorage.getItem("planCalcLang"); if (s === "he" || s === "en") lang = s; } catch(e) {}
+
+function share(e, ded, coins){ return Math.min(e, ded) + Math.max(0, e - ded) * coins; }
+
+// High-cost member pays up to their own per-person cap; everyone else is pooled up to what is left of the family cap.
+function memberCosts(p, t, eD, eO){
+  if (t === "you") return {d:0, o: Math.min(p.you.oop, share(eO, p.you.ded, p.coins))};
+  const d = Math.min(p.ind.oop, share(eD, p.ind.ded, p.coins));
+  const remDed = Math.max(0, p.fam.ded - Math.min(eD, p.ind.ded));
+  const o = Math.min(Math.max(0, p.fam.oop - d), share(eO, remDed, p.coins));
+  return {d, o};
+}
+function assistPremium(p, mode, cap){
+  if (mode === "full") return Math.min(p.kid.monthly, p.fam.monthly) * 12;
+  if (mode === "cap")  return Math.min(p.kid.monthly, cap) * 12;
+  return 0;
+}
+
+function applyLang(){
+  const L = T[lang];
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === "he" ? "rtl" : "ltr";
+  document.querySelectorAll("[data-t]").forEach(el => { const v = L[el.dataset.t]; if (typeof v === "string") el.innerHTML = v; });
+  $("langHe").setAttribute("aria-pressed", lang === "he");
+  $("langEn").setAttribute("aria-pressed", lang === "en");
+  render();
+}
+
+function render(){
+  const L = T[lang];
+  const t = $("tier").value, fam = t === "fam", hi = fam && $("hiOn").checked;
+  const mode = fam ? $("assist").value : "none";
+  $("famOnly1").hidden = !fam;
+  $("famOnly2").hidden = !fam;
+  $("hiBox").hidden = !hi;
+  $("capBox").hidden = mode !== "cap";
+  $("spendLabel").textContent = !fam ? L.spendYou : (hi ? L.spendFam : L.spendAll);
+
+  const eD = hi ? num("dSpendNum") : 0, eO = num("spendNum");
+  const cap = num("capAmt"), reimb = mode === "none" ? 0 : num("reimb");
+  const h = HSA[t], self = Math.min(h.max - h.employer, num("hsaSelf")), rate = num("taxRate") / 100;
+  $("dSpendOut").textContent = fmt(eD);
+  $("spendOut").textContent = fmt(eO);
+
+  const rows = PLANS.map(p => {
+    const prem = p[t].monthly * 12, ap = assistPremium(p, mode, cap);
+    const c = memberCosts(p, t, eD, eO);
+    const assist = ap + (hi ? Math.min(reimb, c.d) : 0);
+    const hsa = p.hsa ? h.employer + self * rate : 0;
+    const worst = prem - ap + p[t].oop - (hi ? Math.min(reimb, p.ind.oop) : 0) - (p.hsa ? h.employer : 0);
+    return {p, prem, assist, d:c.d, o:c.o, hsa, net: prem - assist + c.d + c.o - hsa, worst};
+  });
+  const best = rows.reduce((a,b) => b.net < a.net ? b : a);
+  const sorted = [...rows].sort((a,b) => a.net - b.net);
+  const neg = v => v ? "<bdi>−" + fmt(v) + "</bdi>" : "—";
+
+  const cols = [L.hPlan, L.hPrem, ...(fam ? [L.hAssist] : []), ...(hi ? [L.hHi] : []), L.hRest, L.hHsa, L.hNet];
+  $("resHead").innerHTML = cols.map((c,i) => `<th class="${i ? "n" : ""}">${c}</th>`).join("");
+  $("resTable").querySelector("tbody").innerHTML = rows.map(r =>
+    `<tr class="${r === best ? "best" : ""}"><td>${r.p.name}${r === best ? `<span class="pill">${L.cheapest}</span>` : ""}</td>` +
+    `<td class="n">${fmt(r.prem)}</td>` + (fam ? `<td class="n">${neg(r.assist)}</td>` : "") + (hi ? `<td class="n">${fmt(r.d)}</td>` : "") +
+    `<td class="n">${fmt(r.o)}</td><td class="n">${neg(r.hsa)}</td><td class="n"><b>${fmt(r.net)}</b></td></tr>`).join("");
+
+  const s = !fam ? L.spendYouT(fmt(eO)) : hi ? L.spendFamHi(fmt(eD), fmt(eO)) : L.spendFamNo(fmt(eO));
+  $("verdict").innerHTML = L.verdict(s, best.p.name, fmt(best.net), fmt(sorted[1].net - best.net), sorted[1].p.name);
+  const lo = rows.reduce((a,b) => b.worst < a.worst ? b : a), hiW = rows.reduce((a,b) => b.worst > a.worst ? b : a);
+  $("worst").innerHTML = L.worst(lo.p.name, fmt(lo.worst), hiW.p.name, fmt(hiW.worst));
+
+  const pc = [L.hPlan, L.hMonthly, ...(fam ? [L.hKid] : []), L.hDed, L.hOop, L.hPcp, L.hCoins];
+  $("planHead").innerHTML = pc.map((c,i) => `<th class="${i && i < pc.length - 2 ? "n" : ""}">${c}</th>`).join("");
+  $("planRows").innerHTML = PLANS.map(p => {
+    const c = p[t];
+    const pair = (a, b) => fam ? `${fmt(a)} <span class="muted">(${fmt(b)})</span>` : fmt(a);
+    return `<tr><td>${p.name}</td><td class="n">${fmt(c.monthly)}</td>${fam ? `<td class="n">${fmt(p.kid.monthly)}</td>` : ""}` +
+      `<td class="n">${pair(c.ded, p.ind.ded)}</td><td class="n">${pair(c.oop, p.ind.oop)}</td><td>${p.pcp[lang]}</td><td>${p.coins * 100}%</td></tr>`;
+  }).join("");
+  $("planNote").textContent = fam ? L.planNoteFam : L.planNoteYou;
+  $("planNote").hidden = !fam;
+}
+
+function pair(rangeId, numId, max){
+  $(rangeId).addEventListener("input", () => { $(numId).value = $(rangeId).value; render(); });
+  $(numId).addEventListener("input", () => { $(rangeId).value = Math.min(max, num(numId)); render(); });
+}
+pair("spend", "spendNum", 80000);
+pair("dSpend", "dSpendNum", 300000);
+["tier", "hiOn", "assist", "capAmt", "reimb", "hsaSelf", "taxRate"].forEach(id => {
+  $(id).addEventListener("input", render);
+  $(id).addEventListener("change", render);
+});
+document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click", () => {
+  lang = b.dataset.lang;
+  try { localStorage.setItem("planCalcLang", lang); } catch(e) {}
+  applyLang();
+}));
+applyLang();
+</script>
+</body>
+</html>
